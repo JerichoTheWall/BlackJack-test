@@ -1,118 +1,279 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Final Moments - DMT Flood</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: black;
-      color: white;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      text-align: center;
-    }
-    canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-    #overlay {
-      position: absolute;
-      z-index: 10;
-      padding: 20px;
-      background: rgba(0,0,0,0.5);
-      border-radius: 12px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spiritual Vigil: Thirty Nights of Faith</title>
+    <style>
+        body {
+            background-color: #111;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            margin: 20px auto;
+            border: 2px solid #fff;
+            background-color: #222;
+            overflow: hidden;
+        }
+        #office {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iIzAwMDAwMCIvPjxsaW5lIHgxPSIxMDAiIHkxPSIwIiB4Mj0iMTAwIiB5Mj0iNjAwIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iNSIvPjxyZWN0IHg9IjAiIHk9IjMwMCIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiMwMDAiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+PGxpbmUgeDE9IjcwMCIgeTE9IjAiIHgyPSI3MDAiIHkyPSI2MDAiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSI1Ii8+PHJlY3QgeD0iNzAwIiB5PSIzMDAiIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg=='); /* Simple office with doors */
+            background-size: cover;
+        }
+        .door {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background-color: #333;
+            transition: top 0.5s;
+        }
+        #left-door {
+            left: 0;
+            top: 300px; /* Open position */
+        }
+        #right-door {
+            right: 0;
+            top: 300px; /* Open position */
+        }
+        .closed {
+            top: 250px !important; /* Move up to "close" */
+        }
+        .threat {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: #f00;
+            border-radius: 50%;
+            color: #fff;
+            text-align: center;
+            line-height: 50px;
+            font-size: 12px;
+        }
+        #controls {
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #444;
+            color: #fff;
+            border: 1px solid #fff;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #666;
+        }
+        #action-input {
+            margin-top: 10px;
+        }
+        #action-input input {
+            padding: 5px;
+            width: 300px;
+        }
+        #status {
+            margin-top: 10px;
+            font-size: 18px;
+        }
+        #faith-bar {
+            width: 200px;
+            height: 20px;
+            background-color: #333;
+            border: 1px solid #fff;
+            margin: 10px auto;
+        }
+        #faith-level {
+            height: 100%;
+            background-color: #0f0;
+            width: 100%; /* Starts full */
+        }
+    </style>
 </head>
 <body>
-  <canvas id="canvas"></canvas>
-  <div id="overlay">
-    <h1>Final Moments</h1>
-    <p>You are experiencing your body’s last gift: a flood of DMT.  
-    Watch as reality dissolves and new patterns emerge.</p>
-    <button onclick="startExperience()">Begin</button>
-  </div>
+    <h1>Spiritual Vigil: Defend Your Soul</h1>
+    <p>Monitor the doors and use faith actions to repel threats. Threats approach from left or right. Close doors with the right action when they're near. Faith drains over time when doors are closed. Survive 5 nights (simulated as rounds).</p>
+    <div id="game-container">
+        <div id="office">
+            <div id="left-door" class="door"></div>
+            <div id="right-door" class="door"></div>
+        </div>
+    </div>
+    <div id="controls">
+        <button id="close-left">Close Left Door (Recite Scripture)</button>
+        <button id="open-left">Open Left Door</button>
+        <button id="close-right">Close Right Door (Pray)</button>
+        <button id="open-right">Open Right Door</button>
+        <button id="forgive">Forgive (For Bad Relationships)</button>
+        <button id="confess">Confess (For Addictions/Sins)</button>
+    </div>
+    <div id="action-input">
+        <input type="text" id="scripture-text" placeholder="Type scripture, prayer, or confession here">
+        <button id="submit-action">Submit Action</button>
+    </div>
+    <div id="status">Night 1 - Faith: 100%</div>
+    <div id="faith-bar"><div id="faith-level"></div></div>
 
-  <script>
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    <script>
+        // Game variables
+        let faith = 100; // Like power in FNAF
+        let night = 1;
+        let gameOver = false;
+        let threats = [];
+        let leftDoorClosed = false;
+        let rightDoorClosed = false;
+        const threatTypes = [
+            { name: 'Sin', repel: 'scripture' },
+            { name: 'Bad Relationship', repel: 'forgiveness' },
+            { name: 'Drugs/Addiction', repel: 'confession' },
+            { name: 'Spirit', repel: 'prayer' },
+            { name: 'Demon', repel: 'scripture' }
+        ];
+        const gameContainer = document.getElementById('game-container');
+        const status = document.getElementById('status');
+        const faithLevel = document.getElementById('faith-level');
+        const leftDoor = document.getElementById('left-door');
+        const rightDoor = document.getElementById('right-door');
+        const scriptureInput = document.getElementById('scripture-text');
+        const submitButton = document.getElementById('submit-action');
 
-    let particles = [];
-    let animationId;
-    let running = false;
+        // Function to create a threat
+        function createThreat() {
+            const type = threatTypes[Math.floor(Math.random() * threatTypes.length)];
+            const side = Math.random() < 0.5 ? 'left' : 'right';
+            const threat = document.createElement('div');
+            threat.className = 'threat';
+            threat.innerText = type.name;
+            threat.dataset.type = type.repel;
+            threat.dataset.side = side;
+            if (side === 'left') {
+                threat.style.left = '0px';
+                threat.style.top = `${Math.random() * 500 + 50}px`;
+            } else {
+                threat.style.right = '0px';
+                threat.style.top = `${Math.random() * 500 + 50}px`;
+            }
+            gameContainer.appendChild(threat);
+            threats.push(threat);
+        }
 
-    class Particle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 4 + 1;
-        this.speedX = (Math.random() - 0.5) * 4;
-        this.speedY = (Math.random() - 0.5) * 4;
-        this.hue = Math.random() * 360;
-      }
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
-        this.hue += 1;
-      }
-      draw() {
-        ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
+        // Game loop
+        function gameLoop() {
+            if (gameOver) return;
 
-    function initParticles(count) {
-      particles = [];
-      for (let i = 0; i < count; i++) {
-        particles.push(new Particle());
-      }
-    }
+            // Move threats
+            threats.forEach((threat, index) => {
+                let pos = parseInt(threat.style.left || threat.style.right || 0);
+                const moveSpeed = 1 + (night * 0.5); // Increase difficulty
+                if (threat.dataset.side === 'left') {
+                    threat.style.left = `${pos + moveSpeed}px`;
+                    pos += moveSpeed;
+                    if (pos > 100 && !leftDoorClosed) {
+                        gameOver = true;
+                        status.innerText = `Game Over! ${threat.innerText} entered through left door.`;
+                    }
+                } else {
+                    threat.style.right = `${parseInt(threat.style.right || 0) + moveSpeed}px`;
+                    pos = parseInt(threat.style.right);
+                    if (pos > 100 && !rightDoorClosed) {
+                        gameOver = true;
+                        status.innerText = `Game Over! ${threat.innerText} entered through right door.`;
+                    }
+                }
+                // Remove if past center
+                if (pos > 400) {
+                    threat.remove();
+                    threats.splice(index, 1);
+                }
+            });
 
-    function animate() {
-      ctx.fillStyle = "rgba(0,0,0,0.1)";
-      ctx.fillRect(0,0,canvas.width,canvas.height);
-      particles.forEach(p => {
-        p.update();
-        p.draw();
-      });
-      animationId = requestAnimationFrame(animate);
-    }
+            // Drain faith if doors closed
+            if (leftDoorClosed) faith -= 0.1;
+            if (rightDoorClosed) faith -= 0.1;
+            if (faith <= 0) {
+                gameOver = true;
+                status.innerText = 'Game Over! Faith depleted.';
+            }
+            faithLevel.style.width = `${faith}%`;
 
-    function startExperience() {
-      document.getElementById("overlay").style.display = "none";
-      initParticles(200);
-      if (!running) {
-        running = true;
-        animate();
-        // Simulate "transition" after some time
-        setTimeout(() => {
-          cancelAnimationFrame(animationId);
-          ctx.fillStyle = "black";
-          ctx.fillRect(0,0,canvas.width,canvas.height);
-          ctx.fillStyle = "white";
-          ctx.font = "30px Arial";
-          ctx.textAlign = "center";
-          ctx.fillText("You are free.", canvas.width/2, canvas.height/2);
-        }, 20000); // 20s journey
-      }
-    }
+            // Check win condition (simplified: survive time)
+            if (threats.length < 1 && faith > 0 && night < 5) {
+                night++;
+                status.innerText = `Night ${night} - Faith: ${Math.floor(faith)}%`;
+            } else if (night >= 5) {
+                status.innerText = 'You survived all nights! Victory!';
+                gameOver = true;
+            }
+        }
 
-    window.addEventListener("resize", () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    });
-  </script>
+        // Handle actions
+        document.getElementById('close-left').addEventListener('click', () => {
+            if (!leftDoorClosed) {
+                leftDoorClosed = true;
+                leftDoor.classList.add('closed');
+                status.innerText = 'Left door closed with Scripture. Type a verse to strengthen.';
+            }
+        });
+        document.getElementById('open-left').addEventListener('click', () => {
+            leftDoorClosed = false;
+            leftDoor.classList.remove('closed');
+        });
+        document.getElementById('close-right').addEventListener('click', () => {
+            if (!rightDoorClosed) {
+                rightDoorClosed = true;
+                rightDoor.classList.add('closed');
+                status.innerText = 'Right door closed with Prayer. Type a prayer to strengthen.';
+            }
+        });
+        document.getElementById('open-right').addEventListener('click', () => {
+            rightDoorClosed = false;
+            rightDoor.classList.remove('closed');
+        });
+        document.getElementById('forgive').addEventListener('click', () => {
+            repelThreats('forgiveness');
+        });
+        document.getElementById('confess').addEventListener('click', () => {
+            repelThreats('confession');
+        });
+        submitButton.addEventListener('click', () => {
+            const input = scriptureInput.value.trim();
+            if (input) {
+                // Simulate validation: any input repels if matches type loosely
+                repelThreats('scripture'); // Or prayer, etc.
+                scriptureInput.value = '';
+                status.innerText = `Action submitted: ${input}. Threats repelled if matching.`;
+            }
+        });
+
+        // Repel threats function
+        function repelThreats(action) {
+            threats.forEach((threat, index) => {
+                if (threat.dataset.type === action || action === 'scripture' || action === 'prayer') {
+                    threat.remove();
+                    threats.splice(index, 1);
+                    faith += 5; // Restore some faith
+                    if (faith > 100) faith = 100;
+                }
+            });
+        }
+
+        // Start game
+        setInterval(gameLoop, 50); // 20 FPS
+        setInterval(createThreat, 5000 - (night * 500)); // Spawn threats, faster each night
+
+        // Adjust spawn interval per night
+        setInterval(() => {
+            if (!gameOver) createThreat();
+        }, 5000 - (night * 500));
+    </script>
 </body>
 </html>
