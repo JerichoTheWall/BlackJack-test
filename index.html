@@ -20,7 +20,7 @@
             margin: 20px auto;
             border: 2px solid #fff;
             background-color: #222;
-            overflow: hidden;
+            overflow: visible; /* Allow threats to be seen approaching */
         }
         #office {
             position: absolute;
@@ -28,26 +28,52 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iIzAwMDAwMCIvPjxsaW5lIHgxPSIxMDAiIHkxPSIwIiB4Mj0iMTAwIiB5Mj0iNjAwIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iNSIvPjxyZWN0IHg9IjAiIHk9IjMwMCIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiMwMDAiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+PGxpbmUgeDE9IjcwMCIgeTE9IjAiIHgyPSI3MDAiIHkyPSI2MDAiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSI1Ii8+PHJlY3QgeD0iNzAwIiB5PSIzMDAiIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg=='); /* Simple office with doors */
-            background-size: cover;
+            background: linear-gradient(to bottom, #333 0%, #222 100%);
+        }
+        /* Simulate checkered floor */
+        #floor {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            background-image: linear-gradient(45deg, #000 25%, #333 25%, #333 50%, #000 50%, #000 75%, #333 75%, #333);
+            background-size: 20px 20px;
+        }
+        /* Walls */
+        #left-wall {
+            position: absolute;
+            left: 100px;
+            top: 0;
+            height: 100%;
+            width: 5px;
+            background: #fff;
+        }
+        #right-wall {
+            position: absolute;
+            right: 100px;
+            top: 0;
+            height: 100%;
+            width: 5px;
+            background: #fff;
         }
         .door {
             position: absolute;
+            top: 0;
             width: 100px;
-            height: 100px;
-            background-color: #333;
-            transition: top 0.5s;
+            height: 0;
+            background-color: #555;
+            transition: height 0.5s;
+            box-shadow: 0 0 10px #000;
         }
         #left-door {
             left: 0;
-            top: 300px; /* Open position */
         }
         #right-door {
             right: 0;
-            top: 300px; /* Open position */
         }
         .closed {
-            top: 250px !important; /* Move up to "close" */
+            height: 600px !important;
         }
         .threat {
             position: absolute;
@@ -59,6 +85,7 @@
             text-align: center;
             line-height: 50px;
             font-size: 12px;
+            box-shadow: 0 0 10px #f00;
         }
         #controls {
             margin-top: 20px;
@@ -74,12 +101,13 @@
         button:hover {
             background-color: #666;
         }
-        #action-input {
+        #message {
             margin-top: 10px;
-        }
-        #action-input input {
-            padding: 5px;
-            width: 300px;
+            font-size: 16px;
+            color: #ff0;
+            width: 600px;
+            margin: 10px auto;
+            text-align: left;
         }
         #status {
             margin-top: 10px;
@@ -101,9 +129,12 @@
 </head>
 <body>
     <h1>Spiritual Vigil: Defend Your Soul</h1>
-    <p>Monitor the doors and use faith actions to repel threats. Threats approach from left or right. Close doors with the right action when they're near. Faith drains over time when doors are closed. Survive 5 nights (simulated as rounds).</p>
+    <p>Monitor the approaches and use faith actions to repel threats. Threats approach from left or right. Close doors with actions to block and repel them. Faith drains while doors are closed. Survive 5 nights.</p>
     <div id="game-container">
         <div id="office">
+            <div id="floor"></div>
+            <div id="left-wall"></div>
+            <div id="right-wall"></div>
             <div id="left-door" class="door"></div>
             <div id="right-door" class="door"></div>
         </div>
@@ -116,21 +147,20 @@
         <button id="forgive">Forgive (For Bad Relationships)</button>
         <button id="confess">Confess (For Addictions/Sins)</button>
     </div>
-    <div id="action-input">
-        <input type="text" id="scripture-text" placeholder="Type scripture, prayer, or confession here">
-        <button id="submit-action">Submit Action</button>
-    </div>
+    <div id="message"></div>
     <div id="status">Night 1 - Faith: 100%</div>
     <div id="faith-bar"><div id="faith-level"></div></div>
 
     <script>
         // Game variables
-        let faith = 100; // Like power in FNAF
+        let faith = 100;
         let night = 1;
         let gameOver = false;
         let threats = [];
         let leftDoorClosed = false;
         let rightDoorClosed = false;
+        let spawned = 0;
+        let maxSpawn = night * 5;
         const threatTypes = [
             { name: 'Sin', repel: 'scripture' },
             { name: 'Bad Relationship', repel: 'forgiveness' },
@@ -138,32 +168,70 @@
             { name: 'Spirit', repel: 'prayer' },
             { name: 'Demon', repel: 'scripture' }
         ];
+        const scriptures = [
+            { ref: 'Ephesians 6:10-11', text: 'Finally, be strong in the Lord and in his mighty power. Put on the full armor of God, so that you can take your stand against the devil’s schemes.' },
+            { ref: 'James 4:7', text: 'Submit yourselves, then, to God. Resist the devil, and he will flee from you.' },
+            { ref: '1 Peter 5:8-9', text: 'Be alert and of sober mind. Your enemy the devil prowls around like a roaring lion looking for someone to devour. Resist him, standing firm in the faith...' },
+            { ref: '2 Thessalonians 3:3', text: 'But the Lord is faithful, and he will strengthen you and protect you from the evil one.' },
+            { ref: 'Ephesians 6:12', text: 'For we do not wrestle against flesh and blood, but against principalities, against powers, against the rulers of the darkness of this age, against spiritual hosts of wickedness in the heavenly places.' }
+        ];
+        const prayers = [
+            { text: 'Saint Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil. May God rebuke him, we humbly pray; And do thou, O Prince of the Heavenly Host, by the power of God, thrust into hell Satan and all evil spirits who wander through the world for the ruin of souls. Amen.' },
+            { text: 'Lord, you are my refuge and my fortress. I place my trust in you. Be with me today and protect me from all harm. May the wings of Your angels rescue me from danger. I cling to you now and always, knowing you are near to me in moments of suffering or danger. With a grateful heart, I pray. Amen.' },
+            { text: 'Heavenly Father, I come to you in the name of Jesus, acknowledging your power and sovereignty. I pray for your divine protection over me and my loved ones. Surround us with your angels and create a hedge of safety around us. Guard us from harm, both seen and unseen, and keep us secure in your loving care. I trust in your promise that no weapon formed against us shall prosper. In Jesus\' name, I pray. Amen.' }
+        ];
+        const forgivenessMessages = [
+            { text: 'Matthew 6:14: For if you forgive others their trespasses, your heavenly Father will also forgive you.' },
+            { text: 'I forgive those who have wronged me, as God has forgiven me.' }
+        ];
+        const confessionMessages = [
+            { text: '1 John 1:9: If we confess our sins, he is faithful and just to forgive us our sins and to cleanse us from all unrighteousness.' },
+            { text: 'Lord, I confess my sins and seek your forgiveness.' }
+        ];
         const gameContainer = document.getElementById('game-container');
         const status = document.getElementById('status');
         const faithLevel = document.getElementById('faith-level');
         const leftDoor = document.getElementById('left-door');
         const rightDoor = document.getElementById('right-door');
-        const scriptureInput = document.getElementById('scripture-text');
-        const submitButton = document.getElementById('submit-action');
+        const message = document.getElementById('message');
+
+        // Function to show message
+        function showMessage(msg) {
+            message.innerText = msg;
+            setTimeout(() => { message.innerText = ''; }, 10000); // Clear after 10s
+        }
 
         // Function to create a threat
         function createThreat() {
+            if (spawned >= maxSpawn || gameOver) return;
             const type = threatTypes[Math.floor(Math.random() * threatTypes.length)];
-            const side = Math.random() < 0.5 ? 'left' : 'right';
+            let side = Math.random() < 0.5 ? 'left' : 'right';
+            // Check if side has active threat
+            const hasLeft = threats.some(t => t.dataset.side === 'left');
+            const hasRight = threats.some(t => t.dataset.side === 'right');
+            if ((side === 'left' && hasLeft) || (side === 'right' && hasRight)) {
+                // Try other side
+                side = side === 'left' ? 'right' : 'left';
+                if ((side === 'left' && hasLeft) || (side === 'right' && hasRight)) {
+                    return; // Both sides busy, skip
+                }
+            }
             const threat = document.createElement('div');
             threat.className = 'threat';
             threat.innerText = type.name;
             threat.dataset.type = type.repel;
             threat.dataset.side = side;
+            const verticalPos = Math.random() * 400 + 100; // Avoid edges
             if (side === 'left') {
-                threat.style.left = '0px';
-                threat.style.top = `${Math.random() * 500 + 50}px`;
+                threat.style.left = '-200px';
+                threat.style.top = `${verticalPos}px`;
             } else {
-                threat.style.right = '0px';
-                threat.style.top = `${Math.random() * 500 + 50}px`;
+                threat.style.right = '-200px';
+                threat.style.top = `${verticalPos}px`;
             }
             gameContainer.appendChild(threat);
             threats.push(threat);
+            spawned++;
         }
 
         // Game loop
@@ -172,19 +240,21 @@
 
             // Move threats
             threats.forEach((threat, index) => {
-                let pos = parseInt(threat.style.left || threat.style.right || 0);
-                const moveSpeed = 1 + (night * 0.5); // Increase difficulty
+                let pos = parseInt(threat.style.left || (800 - parseInt(threat.style.right || 0)));
+                const moveSpeed = 1 + (night * 0.5);
                 if (threat.dataset.side === 'left') {
-                    threat.style.left = `${pos + moveSpeed}px`;
-                    pos += moveSpeed;
-                    if (pos > 100 && !leftDoorClosed) {
+                    const currentLeft = parseInt(threat.style.left);
+                    threat.style.left = `${currentLeft + moveSpeed}px`;
+                    pos = currentLeft + moveSpeed;
+                    if (pos >= 0 && !leftDoorClosed) {
                         gameOver = true;
                         status.innerText = `Game Over! ${threat.innerText} entered through left door.`;
                     }
                 } else {
-                    threat.style.right = `${parseInt(threat.style.right || 0) + moveSpeed}px`;
-                    pos = parseInt(threat.style.right);
-                    if (pos > 100 && !rightDoorClosed) {
+                    const currentRight = parseInt(threat.style.right);
+                    threat.style.right = `${currentRight + moveSpeed}px`;
+                    pos = currentRight + moveSpeed;
+                    if (pos >= 0 && !rightDoorClosed) {
                         gameOver = true;
                         status.innerText = `Game Over! ${threat.innerText} entered through right door.`;
                     }
@@ -199,20 +269,26 @@
             // Drain faith if doors closed
             if (leftDoorClosed) faith -= 0.1;
             if (rightDoorClosed) faith -= 0.1;
+            faith = Math.max(0, faith);
             if (faith <= 0) {
                 gameOver = true;
                 status.innerText = 'Game Over! Faith depleted.';
             }
             faithLevel.style.width = `${faith}%`;
 
-            // Check win condition (simplified: survive time)
-            if (threats.length < 1 && faith > 0 && night < 5) {
+            // Check for next night
+            if (spawned >= maxSpawn && threats.length === 0 && !gameOver) {
                 night++;
-                status.innerText = `Night ${night} - Faith: ${Math.floor(faith)}%`;
-            } else if (night >= 5) {
-                status.innerText = 'You survived all nights! Victory!';
-                gameOver = true;
+                if (night > 5) {
+                    status.innerText = 'You survived all nights! Victory!';
+                    gameOver = true;
+                } else {
+                    status.innerText = `Night ${night} - Faith: ${Math.floor(faith)}%`;
+                    maxSpawn = night * 5;
+                    spawned = 0;
+                }
             }
+            status.innerText = `Night ${night} - Faith: ${Math.floor(faith)}%`;
         }
 
         // Handle actions
@@ -220,7 +296,9 @@
             if (!leftDoorClosed) {
                 leftDoorClosed = true;
                 leftDoor.classList.add('closed');
-                status.innerText = 'Left door closed with Scripture. Type a verse to strengthen.';
+                const rand = scriptures[Math.floor(Math.random() * scriptures.length)];
+                showMessage(`${rand.ref}: ${rand.text}`);
+                repelThreats('scripture');
             }
         });
         document.getElementById('open-left').addEventListener('click', () => {
@@ -231,7 +309,9 @@
             if (!rightDoorClosed) {
                 rightDoorClosed = true;
                 rightDoor.classList.add('closed');
-                status.innerText = 'Right door closed with Prayer. Type a prayer to strengthen.';
+                const rand = prayers[Math.floor(Math.random() * prayers.length)];
+                showMessage(rand.text);
+                repelThreats('prayer');
             }
         });
         document.getElementById('open-right').addEventListener('click', () => {
@@ -239,41 +319,36 @@
             rightDoor.classList.remove('closed');
         });
         document.getElementById('forgive').addEventListener('click', () => {
+            const rand = forgivenessMessages[Math.floor(Math.random() * forgivenessMessages.length)];
+            showMessage(rand.text);
             repelThreats('forgiveness');
         });
         document.getElementById('confess').addEventListener('click', () => {
+            const rand = confessionMessages[Math.floor(Math.random() * confessionMessages.length)];
+            showMessage(rand.text);
             repelThreats('confession');
-        });
-        submitButton.addEventListener('click', () => {
-            const input = scriptureInput.value.trim();
-            if (input) {
-                // Simulate validation: any input repels if matches type loosely
-                repelThreats('scripture'); // Or prayer, etc.
-                scriptureInput.value = '';
-                status.innerText = `Action submitted: ${input}. Threats repelled if matching.`;
-            }
         });
 
         // Repel threats function
         function repelThreats(action) {
-            threats.forEach((threat, index) => {
-                if (threat.dataset.type === action || action === 'scripture' || action === 'prayer') {
+            for (let i = threats.length - 1; i >= 0; i--) {
+                const threat = threats[i];
+                if (threat.dataset.type === action) {
                     threat.remove();
-                    threats.splice(index, 1);
-                    faith += 5; // Restore some faith
-                    if (faith > 100) faith = 100;
+                    threats.splice(i, 1);
+                    faith = Math.min(100, faith + 5); // Restore some faith
                 }
-            });
+            }
         }
 
         // Start game
-        setInterval(gameLoop, 50); // 20 FPS
-        setInterval(createThreat, 5000 - (night * 500)); // Spawn threats, faster each night
+        const gameInterval = setInterval(gameLoop, 50); // 20 FPS
+        setInterval(createThreat, 3000); // Spawn every 3s
 
-        // Adjust spawn interval per night
-        setInterval(() => {
-            if (!gameOver) createThreat();
-        }, 5000 - (night * 500));
+        // Stop intervals on game over
+        if (gameOver) {
+            clearInterval(gameInterval);
+        }
     </script>
 </body>
 </html>
